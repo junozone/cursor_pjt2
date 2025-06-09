@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーモデル
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  weight        Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  workoutRecords WorkoutRecord[]
+  achievements   Achievement[]
+
+  @@map("users")
+}
+
+// NextAuth.js Account Model
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// NextAuth.js Session Model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ご褒美ごはんモデル
+model RewardFood {
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  calories     Int
+  imageUrl     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  achievements Achievement[]
+
+  @@map("reward_foods")
+}
+
+// 運動モデル
+model Workout {
+  id              String         @id @default(cuid())
+  name            String
+  description     String?
+  caloriesPerHour Int
+  type            String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  workoutRecords  WorkoutRecord[]
+
+  @@map("workouts")
+}
+
+// 運動記録モデル
+model WorkoutRecord {
+  id             String         @id @default(cuid())
+  userId         String
+  workoutId      String
+  startTime      DateTime
+  endTime        DateTime
+  duration       Int            // 分単位
+  caloriesBurned Int
+  note           String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id])
+  workout        Workout        @relation(fields: [workoutId], references: [id])
+  achievements   Achievement[]
+
+  @@index([userId])
+  @@index([workoutId])
+  @@map("workout_records")
+}
+
+// 達成モデル
+model Achievement {
+  id                 String         @id @default(cuid())
+  userId             String
+  rewardFoodId       String
+  totalCaloriesBurned Int
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  user               User           @relation(fields: [userId], references: [id])
+  rewardFood         RewardFood     @relation(fields: [rewardFoodId], references: [id])
+  workoutRecords     WorkoutRecord[]
+
+  @@index([userId])
+  @@index([rewardFoodId])
+  @@map("achievements")
+}

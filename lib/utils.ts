@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 // カロリー計算関数（METs値を使用）
@@ -19,6 +19,7 @@ export function formatDate(date: Date): string {
     day: "numeric",
   })
 }
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
